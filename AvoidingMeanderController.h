@@ -28,7 +28,7 @@ class AvoidingMeanderController {
  public:
   MotorDrive *_mot;
   float _speed;  // current commanded speed
-  int _pinSens;  // input pin for digital proximity sensor
+  int _pinSens;  // input pin for proximity sensor
 
   MotorDrive()
     {
@@ -47,8 +47,8 @@ class AvoidingMeanderController {
 
   inline void setSpeed(const long t)
     {
-      if (_speed < -255.0) _speed = -255.0;
-      if (_speed >  255.0) _speed =  255.0;
+      if (_speed < -255.0f) _speed = -255.0f;
+      if (_speed >  255.0f) _speed =  255.0f;
       _mot->setSpeed((int)_speed,t);
     }
 
@@ -64,11 +64,11 @@ class AvoidingMeanderController {
 
   void updateRandomWalk(const long t)
     {
-      float dSpeed = state.randStepGain * _speed;
+      float dSpeed = state.stepGain * _speed;
       dSpeed = ABS(dSpeed);
-      if (dSpeed < state.randStepMin) dSpeed = state.randStepMin;
-      float offst = state.randStepOffset;
-      if (_speed > state.cruise) offst *= -0.5f;
+      if (dSpeed < state.stepMin) dSpeed = state.stepMin;
+      float offst = state.stepOffset;
+      if (_speed > state.cruise) offst *= -0.3f;
       dSpeed = dSpeed * (randu() + offst);
       _speed += dSpeed;
       setSpeed(t);

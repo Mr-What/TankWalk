@@ -12,12 +12,25 @@ typedef struct TankWalkState_s {
   float avoidGain;  // reduce speed by speed*avoidGain
   float avoidMin;   // reduce speed by at least this much
 
-  float randStepGain;   // random step ~ U(1)*speed*gain
-  float randStepOffset; // bias U(1) by this offset, usually small and positive
-  float randStepMin;    // let (pre-random) step be at least this magniturde
-  float cruise;         // de-bias step above this cruising speed
+  float stepGain;   // random step ~ U(1)*speed*gain
+  float stepBias;   // bias U(1) by this offset, usually small and positive
+  float stepMin;    // let (pre-random) step be at least this magniturde
+  float cruise;     // de-bias step above this cruising speed
 
 } TankWalkState;
+
+const char *stateName[] = {
+  F("avoidGain"),
+  F("avoidMin"),
+  F("cruise"),
+  F("stepGain"),
+  F("stepBias"),
+  F("stepMin")
+};
+
+void printStateParam(const char *nam, const float val) {
+  Serial.print(nam);Serial.print('\t');Serial.println(val);
+}
 
 void printState(const TankWalkState *s) {
   byte *b = (byte *)(&(s->id));
@@ -26,26 +39,31 @@ void printState(const TankWalkState *s) {
   Serial.print((char)(b[1]));
   Serial.print((int)b[2]); Serial.print('.');
   Serial.println((int)b[3]);
-
+  printStateParam(stateName[0]),s->avoidGain);
+  printStateParam(stateName[1]),s->avoidMin);
+  printStateParam(stateName[2]),s->cruise);
+  printStateParam(stateName[3]),s->stepGain);
+  printStateParam(stateName[4]),s->stepBias);
+  printStateParam(stateName[5]),s->stepMin);
 }
 
 int isValid(const TankWalkState *s) {
   if (s->id != VERSID) return(0);
 
-  if ( (s->avoidGain      <= 0.0f) || 
-       (s->avoidMin       <= 0.0f) ||
-       (s->randStepGain   <= 0.0f) ||
-       (s->randStepOffset <= 0.0f) ||
-       (s->randStepMin    <= 0.0f) ||
-       (s->cruise < 40.0f) )
+  if ( (s->avoidGain  <= 0.0f) || 
+       (s->avoidMin   <= 0.0f) ||
+       (s->stepGain   <= 0.0f) ||
+       (s->stepOffset <= 0.0f) ||
+       (s->stepMin    <= 0.0f) ||
+       (s->cruise     < 40.0f) )
      return(0);
   
-  if ( (s->avoidGain      >  0.7f) || 
-       (s->avoidMin       > 99.0f) ||
-       (s->randStepGain   >  0.8f) ||
-       (s->randStepOffset >  5.0f) ||
-       (s->randStepMin    >  9.9f) ||
-       (s->cruise > 256.0f) )
+  if ( (s->avoidGain  >  0.7f) || 
+       (s->avoidMin   > 99.0f) ||
+       (s->stepGain   >  0.8f) ||
+       (s->stepOffset >  5.0f) ||
+       (s->stepMin    >  9.9f) ||
+       (s->cruise     > 256.0f) )
      return(0);
   
   return(1);
@@ -57,10 +75,10 @@ void setDefault(const TankWalkState *s) {
   s->avoidGain = 0.1f;
   s->avoidMin  = 0.5f;
 
-  s->randStepGain = 0.1f;   // random step ~ U(1)*speed*gain
-  s->randStepOffset = 0.01f; // bias U(1) 
-  s->randStepMin = 0.4f;    // (pre-random) at least this mag
-  s->cruise = 180.0f;     // de-bias step above this cruising speed
+  s->stepGain = 0.1f;    // random step ~ U(1)*speed*gain
+  s->stepOffset = 0.01f; // bias U(1) 
+  s->stepMin = 0.4f;     // (pre-random) at least this mag
+  s->cruise = 180.0f;    // de-bias step above this cruising speed
 }
 
 void loadEEPROM(const int offset, const int n, byte *b) {
