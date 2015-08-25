@@ -26,6 +26,8 @@ If you do use this code please retain credit to above as originator.
 //      (must be at top, to force Ardiono.h include)
 int nMsg = 9;
 
+//#include <avr/eeprom.h>
+
 //const char TAB = '\t';  // forces #include<Arduino.h> here, needed for following #include's
 
 #define UPDATE_DT 25  // motor speed update period, ms
@@ -60,7 +62,7 @@ void setup()
   MotL.begin(11,7,8);
 
   // first param is digital-in pin for collision avoidance sensor
-  CtrlR.begin( 9,&MotR);
+  CtrlR.begin((const int) 9,&MotR);
   CtrlL.begin(10,&MotL);
   
   //Serial.begin(9600);

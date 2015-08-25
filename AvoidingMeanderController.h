@@ -30,7 +30,7 @@ class AvoidingMeanderController {
   float _speed;  // current commanded speed
   int _pinSens;  // input pin for proximity sensor
 
-  MotorDrive()
+  AvoidingMeanderController()
     {
       _mot = 0;
       _speed = 0;
@@ -67,7 +67,7 @@ class AvoidingMeanderController {
       float dSpeed = state.stepGain * _speed;
       dSpeed = ABS(dSpeed);
       if (dSpeed < state.stepMin) dSpeed = state.stepMin;
-      float offst = state.stepOffset;
+      float offst = state.stepBias;
       if (_speed > state.cruise) offst *= -0.3f;
       dSpeed = dSpeed * (randu() + offst);
       _speed += dSpeed;

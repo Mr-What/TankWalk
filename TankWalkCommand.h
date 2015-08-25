@@ -5,7 +5,7 @@ Main commands are to tweak control parameters,
 and read/write them as persistant state
 */
 
-#include <ioUtil.h>
+#include "ioUtil.h"
 SerialLineBuffer SerialCmd;
 
 // extern : int nMsg = 9;
@@ -44,6 +44,12 @@ void setVal(const char *key, const char *valStr, int &val)
 }
 */
 
+// try to preserve variable memory.  AFAIK, const globals go into flash...?
+const char *HELP = "help";
+const char *SHOW = "show";
+const char *SAVE = "save";
+const char *RESET = "reset";
+
 // check if command was received, and process it
 void processCommand()
 {
@@ -57,15 +63,15 @@ void processCommand()
   if (val && *val) {Serial.print("\t");Serial.println(val);}
   else Serial.println("");
 
-  if (keyMatch(key,F("help")) || (*key=='?') || keyMatch(key,F("show")) )
+  if (keyMatch(key,HELP) || (*key=='?') || keyMatch(key,SHOW) )
     {
       Serial.println(F("?|help|show : print this message"));
       Serial.println(F("save\t: save current state to EEPROM"));
       Serial.println(F("reset\t: reset current state to defaults"));
-      printState();
+      printState(&state);
     }
-  else if (keyMatch(key,F("save"))) {updateState(&state);}
-  else if (keyMatch(key,F("reset"))) {setDefault(&state);}
+  else if (keyMatch(key,SAVE)) {updateState(&state);}
+  else if (keyMatch(key,RESET)) {setDefault(&state);}
   else if (keyMatch(key,stateName[0]) ||
 	   keyMatch(key,stateName[1]) ||
 	   keyMatch(key,stateName[2]) ||
@@ -75,18 +81,18 @@ void processCommand()
     {
       float x;
       setVal(key,val,x);
-      if      (keyMatch(key,stateName[0])) s->avoidGain= x;
-      else if (keyMatch(key,stateName[1])) s->avoidMin = x;
-      else if (keyMatch(key,stateName[2])) s->cruise   = x;
-      else if (keyMatch(key,stateName[3])) s->stepGain = x;
-      else if (keyMatch(key,stateName[4])) s->stepBias = x;
-      else if (keyMatch(key,stateName[5])) s->stepMin  = x;
+      if      (keyMatch(key,stateName[0])) state.avoidGain= x;
+      else if (keyMatch(key,stateName[1])) state.avoidMin = x;
+      else if (keyMatch(key,stateName[2])) state.cruise   = x;
+      else if (keyMatch(key,stateName[3])) state.stepGain = x;
+      else if (keyMatch(key,stateName[4])) state.stepBias = x;
+      else if (keyMatch(key,stateName[5])) state.stepMin  = x;
       else Serial.println(F("Unidentified key.  should never happen."));
     }
   else
     {
-      Serial.print("#Unrecognized command \"");
+      Serial.print(F("#Unrecognized command \""));
       Serial.print(key);
-      Serial.println("\"");
+      Serial.println('"');
     }
 }
