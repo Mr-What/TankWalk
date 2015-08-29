@@ -37,8 +37,8 @@ int nMsg = 9;
 //#define DBH1  // use DBH1 modifications of 298 driver
 #include "MotorDrive298.h"
 // params : decelRate, deadmanTimeout, startupPulseDuration, stopTimeout, maxPWM
-MotorDrive MotL(1.0f);
-MotorDrive MotR(1.0f);
+MotorDrive MotL(0.5f);
+MotorDrive MotR(0.5f);
 
 #include "TankWalkState.h"
 TankWalkState state;
@@ -51,24 +51,43 @@ AvoidingMeanderController CtrlR, CtrlL;
 unsigned long prevCommandTime = 0;
 unsigned long tFlash = 0;
 
+volatile bool proxSensL = false;  // true if proximity sensor has been triggered
+volatile bool proxSensR = false;
+
+void sensorTriggerL() { proxSensL=true; }  //  left sensor on pin 2
+void sensorTriggerR() { proxSensR=true; }  // right sensor on pin 3
+
 void setup()
 {
   // AVR 168, 328 based Arduinos have PWM on 3, 5, 6, 9, 10, and 11
   // Timer2 for pins 3,11 : Timer 0 for pins 6,5 : Timer 1 for 9,10
   // Mega has PWM on on pins 2 through 13.
+  // Uno, Nano ,,, (AVR 328?) :
+  // 9,10 are 16-bit timer, Timer1.  Changing freq on these messes up Servo
+  // 3,11 are Timer2, changing freq changes tone() function
+  // 5,6  are Timer0, changing freq messes up millis()... DO NOT CHANGE FREQ ON THESE!
 
   // params: EN, IN1, IN2
-  MotR.begin(3,2,4);
-  MotL.begin(11,7,8);
+  //MotR.begin(3,2,4);
+  //MotL.begin(11,7,8);
+  MotR.begin(10,11,12);
+  MotL.begin( 9, 7, 8);
 
   // first param is digital-in pin for collision avoidance sensor
-  CtrlR.begin((const int) 9,&MotR);
-  CtrlL.begin(10,&MotL);
+  CtrlR.begin(2,&MotR,&proxSensL);
+  CtrlL.begin(3,&MotL,&proxSensR);
   
   //Serial.begin(9600);
   Serial.begin(57600);  // nano
   //Serial.begin(115200);  # uno
 
+  // AVR328 (uno, nano...) Interrupt 0 is on pin 2, interrupt 1 is on pin 3
+  // be sure to catch even brief detect events
+  pinMode(2, INPUT);
+  pinMode(3, INPUT);
+  attachInterrupt(0,sensorTriggerL,FALLING);  //  left sensor on pin 2
+  attachInterrupt(1,sensorTriggerR,FALLING);  // right sensor on pin 3
+  
   // When doing diagnostics, we may want to increase deadman time
   //MotL.setCommandTimeout(16000);
   //MotR.setCommandTimeout(16000);

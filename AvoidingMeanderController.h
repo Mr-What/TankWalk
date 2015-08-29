@@ -28,19 +28,22 @@ class AvoidingMeanderController {
  public:
   MotorDrive *_mot;
   float _speed;  // current commanded speed
-  int _pinSens;  // input pin for proximity sensor
-
+  //int _pinSens;  // input pin for proximity sensor
+  volatile bool* _sensState;
+  
   AvoidingMeanderController()
     {
       _mot = 0;
       _speed = 0;
-      _pinSens = -1;
+      //_pinSens = -1;
+      _sensorTriggered = 0;
     }
 
-  void begin(const int pinSens, MotorDrive *md)
+  void begin(const int pinSens, MotorDrive *md, bool *sensFlagPtr)
     {
       _mot = md;
       _mot->stop();
+      _sensState = sensFlagPtr;
       _pinSens = pinSens;
       pinMode(_pinSens, INPUT);
     }
@@ -55,6 +58,7 @@ class AvoidingMeanderController {
   // perform avoidance maneuver update
   void avoid(const long t)
     {
+      *_sensState = false;
       float dSpeed = _speed * state.avoidGain;
       dSpeed = ABS(dSpeed);
       if (dSpeed < state.avoidMin) dSpeed = state.avoidMin;
@@ -76,10 +80,9 @@ class AvoidingMeanderController {
 
   void update(const long t)
     {
-      if (digitalRead(_pinSens) == LOW)
-	avoid(t);
-      else
-	updateRandomWalk(t);
+      //if (digitalRead(_pinSens) == LOW)
+      if (*_sensState || (digitalRead(_pinSens) == LOW) ) avoid(t);
+      else updateRandomWalk(t);
     }
 
 };
